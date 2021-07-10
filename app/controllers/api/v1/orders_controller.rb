@@ -8,11 +8,7 @@ class Api::V1::OrdersController < ApplicationController
   def show
     @order = Order.find(params[:id])
     if @order
-      render json: @order, include: { customer: {except: [:id, :created_at, :updated_at ]},
-                                      items: {except: [:id, :created_at, :updated_at]},
-                                      payments: {except: [:id, :order_id, :created_at, :updated_at]}
-                                    },
-                                      except: [:id, :customer_id, :created_at, :updated_at ], status: 200
+      render_order
     else
       render json: {error: "Order not found"}
     end
@@ -24,17 +20,20 @@ class Api::V1::OrdersController < ApplicationController
     # @order.items.build
     # @order.payments.build
     if @order.save
-      render json: @order, include: { customer: {except: [:id, :created_at, :updated_at ]},
-                                      items: {except: [:id, :created_at, :updated_at]},
-                                      payments: {except: [:id, :created_at, :updated_at]}
-                                    },
-                                      except: [:id, :customer_id, :created_at, :updated_at ], status: 200
+      render_order
     else
       render json: {error: "Error creating order"}
     end
   end
 
   private
+  def render_order
+    render json: @order, include: { customer: {except: [:id, :created_at, :updated_at ]},
+                                    items: {except: [:id, :created_at, :updated_at]},
+                                    payments: {except: [:id, :order_id, :created_at, :updated_at]}
+                                    },
+                                    except: [:id, :customer_id, :created_at, :updated_at ], status: 200
+  end
 
   def order_params
     params.require(:order).permit(:external_code, 
