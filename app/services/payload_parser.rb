@@ -6,12 +6,42 @@ class PayloadParser
     @payload = JSON.parse(serialized_data)
   end
 
-  def get_order
+  def create_customer
+    @customer = {
+      "external_code": @payload["buyer"]["id"].to_s,
+      "name": @payload["buyer"]["nickname"],
+      "email": @payload["buyer"]["email"],
+      "contact": "#{@payload['buyer']['phone']['area_code']}#{@payload['buyer']['phone']['number']}"
+  }
+  end
+
+  def create_payment
+    @payments = @payload["payments"]. map do |payment|
+      {
+        "kind": payment["payment_type"],
+        "value": payment["installment_amount"]
+      }
+    end
+  end
+
+  def create_item
+    @items = @payload["order_items"].map do |order_item|
+      {
+        "external_code": order_item["item"]["id"],
+        "name": order_item["item"]["title"],
+        "price": order_item["unit_price"],
+        "quantity": order_item["quantity"],
+        "total": order_item["full_unit_price"]
+      } 
+    end
+  end
+
+  def create_order
     {
-      "externalCode": @payload["id"].to_s,
-      "storeId": @payload["store_id"],
-      "subTotal": @payload["total_amount"].to_s,
-      "deliveryFee": @payload["total_shipping"].to_s,
+      "external_code": @payload["id"].to_s,
+      "store_id": @payload["store_id"],
+      "sub_total": @payload["total_amount"].to_s,
+      "delivery_fee": @payload["total_shipping"].to_s,
       "total_shipping": @payload["total_shipping"],
       "total": @payload["total_amount_with_shipping"].to_s,
       "country": @payload["shipping"]["receiver_address"]["country"]["id"],
@@ -20,33 +50,11 @@ class PayloadParser
       "district": @payload["shipping"]["receiver_address"]["neighborhood"]["name"],
       "street": @payload["shipping"]["receiver_address"]["street_name"],
       "complement": @payload["shipping"]["receiver_address"]["comment"],
-      "latitude":  @payload["shipping"]["latitude"],
-      "longitude":  @payload["shipping"]["longitude"],
-      "dtOrderCreate": @payload["date_created"],
-      "postalCode": @payload["shipping"]["receiver_address"]["zip_code"],
+      "latitude":  @payload["shipping"]["receiver_address"]["latitude"],
+      "longitude":  @payload["shipping"]["receiver_address"]["longitude"],
+      "dt_order_create": @payload["date_created"],
+      "postal_code": @payload["shipping"]["receiver_address"]["zip_code"],
       "number": @payload["shipping"]["receiver_address"]["street_number"],
-      "customer": {
-          "externalCode": @payload["buyer"]["id"].to_s,
-          "name": @payload["buyer"]["nickname"],
-          "email": @payload["buyer"]["email"],
-          "contact": "#{@payload['buyer']['phone']['area_code']}#{@payload['buyer']['phone']['number']}"
-      },
-      "items": [
-          {
-              "externalCode": @payload["order_items"][0]["id"],
-              "name": @payload["order_items"][0]["title"],
-              "price": @payload["order_items"][0]["unit_price"],
-              "quantity": @payload["order_items"][0]["quantity"],
-              "total": @payload["order_items"][0]["full_unit_price"],
-              "subItems": []
-          }
-      ],
-      "payments": [
-          {
-              "type": @payload["payments"][0]["payment_type"],
-              "value": @payload["payments"][0]["installment_amount"]
-          }
-      ]
     }
   end
 
